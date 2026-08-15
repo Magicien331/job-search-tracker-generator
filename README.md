@@ -2,6 +2,10 @@
 
 A Python script that builds an Excel workbook for tracking job applications. It sets up the sheets, the dropdowns, the status coloring, and a small dashboard, so all you do is fill in rows.
 
+![Dashboard](assets/dashboard.png)
+
+![Job Applications table](assets/table.png)
+
 ## Why a script, not a ready-made file?
 
 Everyone's job search is different, so instead of one fixed template this is a small script you shape to yourself. Change a few lists at the top (your statuses, platforms, colors) and the whole file rebuilds to match: dropdowns, dashboard, colors, and chart all stay in sync, with nothing to fix by hand. Every run produces a fresh, clean workbook, and the code is open (MIT) so you can see exactly what it does.
