@@ -38,7 +38,7 @@ Run the script:
 python generate_tracker.py
 ```
 
-Open the resulting `Job_Search_Tracker.xlsx` in Excel, Google Sheets, or LibreOffice; every formula recalculates when the file opens. You don't need Excel installed at all: upload the file to Google Drive and use it entirely in Google Sheets from every device for best experience.
+Open the resulting `Job_Search_Tracker.xlsx` in Excel, Google Sheets, or LibreOffice; every formula recalculates when the file opens. You don't need Excel installed at all: upload the file to Google Drive and use it entirely in Google Sheets from every device. 
 
 ## Configuration
 
