@@ -1,0 +1,21 @@
+# The generated workbook is a build artifact, not source.
+# Build it locally with: python generate_tracker.py
+*.xlsx
+*.xls
+~$*.xlsx
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+conda/
+.conda/
+env/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.env
