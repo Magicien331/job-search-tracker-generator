@@ -1,6 +1,6 @@
 # Job Search Tracker Generator
 
-A Python script that builds an Excel workbook for tracking job applications. It sets up the sheets, the dropdowns, the stage and outcome coloring, and a dashboard, so all you do is fill in rows.
+A Python script that builds an Excel workbook for tracking job applications. It sets up the sheets, the dropdowns, the stage and outcome coloring, and a dashboard, including some smart advices, so all you do is fill in rows.
 Works with Excel, Google Sheets, and LibreOffice.
 
 ![Job Applications Table](assets/table.png)
