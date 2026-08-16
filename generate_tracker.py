@@ -23,40 +23,68 @@ DATE_FORMAT = 'dd/mm/yyyy'  # how dates display in the sheet
 # Dropdown lists
 PLATFORMS = ['LinkedIn', 'Company Website', 'Telegram', 'WhatsApp', 'Referral', 'Indeed', 'Glassdoor', 'Other']
 WORK_MODELS = ['Remote', 'Hybrid', 'On-site']
-# Status -> (fill color, text color). One place controls the dropdown order,
-# the dashboard breakdown order, and the row coloring. Add or edit a status here
-# and it flows everywhere; no need to touch colors further down.
-STATUS_STYLES = {
-    'Applied': ('#FFF2CC', '#7F6000'),
-    'Under Review': ('#FFE699', '#7F6000'),
-    'HR Screen': ('#D9E1F2', '#1F4E78'),
-    'Technical Interview': ('#BDD7EE', '#1F4E78'),
-    'Take-Home Task': ('#E2EFDA', '#375623'),
-    'Final Interview': ('#FCE4D6', '#C65911'),
-    'Offer Received': ('#C6EFCE', '#006100'),
-    'Accepted': ('#A9D08E', '#375623'),
-    'Rejected': ('#F8CBAD', '#C65911'),
-    'Withdrawn': ('#E7E6E6', '#595959'),
-    'Ghosted': ('#D9D9D9', '#595959'),
+
+# Pipeline stages (the Stage column) -> (fill, text), in blue shades that deepen
+# along the funnel. Order here drives the Stage dropdown, the pipeline breakdown,
+# and the drop-off analysis. Add or rename a stage here and it flows everywhere.
+STAGE_STYLES = {
+    'Applied':                 ('#EAF0F9', '#1F4E78'),
+    'Application Review':      ('#DBE6F4', '#1F4E78'),
+    'Recruiter / HR Screen':   ('#CBDDEF', '#1F4E78'),
+    'Hiring Manager Screen':   ('#BDD7EE', '#1F4E78'),
+    'Technical Interview':     ('#A6C8E8', '#1F4E78'),
+    'Take-Home Task':          ('#8FB9E0', '#123553'),
+    'Panel / Team Interview':  ('#6FA6D6', '#FFFFFF'),
+    'Final Interview':         ('#4A8AC4', '#FFFFFF'),
+    'Offer / Negotiation':     ('#2E6CA6', '#FFFFFF'),
 }
-STATUSES = list(STATUS_STYLES)
+STAGES = list(STAGE_STYLES)
+
+# Outcomes (the Status column) -> (fill, text). In Progress is amber; wins are
+# green; Rejected/Ghosted are red; Withdrawn is grey (a voluntary exit, not a loss).
+OUTCOME_STYLES = {
+    'In Progress':    ('#FFF2CC', '#7F6000'),
+    'Offer Received': ('#C6EFCE', '#006100'),
+    'Accepted':       ('#A9D08E', '#375623'),
+    'Rejected':       ('#FFC7CE', '#9C0006'),
+    'Ghosted':        ('#F4B7A6', '#843C0C'),
+    'Withdrawn':      ('#E7E6E6', '#595959'),
+}
+STATUSES = list(OUTCOME_STYLES)
+
 CURRENCIES = ['ILS (\u20aa)', 'USD ($)', 'EUR (\u20ac)', 'GBP (\u00a3)', 'CAD ($)', 'Other']
 EMP_TYPES = ['Full-time', 'Part-time', 'Contract / B2B']
 NEXT_ACTIONS = ['Follow-up Email', 'HR Call', 'Technical Test Submission',
                 'Interview Prep', 'Wait for Feedback', 'Offer Review']
 RATINGS = [1, 2, 3, 4, 5]
 
-# Which statuses roll up into each dashboard KPI.
-# If you add a status to STATUS_STYLES above, decide whether it also belongs in
-# one of these groups; otherwise it shows in the table but not in these KPIs.
-# NO_RESPONSE is business logic (who counts as "never replied"), so it stays manual.
-IN_PROGRESS = ['Applied', 'Under Review', 'HR Screen', 'Technical Interview', 'Take-Home Task', 'Final Interview']
-INTERVIEWS = ['HR Screen', 'Technical Interview', 'Take-Home Task', 'Final Interview']
-NO_RESPONSE = ['Applied', 'Withdrawn', 'Ghosted']
-
-# Statuses treated as wins: highlighted in the breakdown and the chart, but only
-# once their count is above zero (no color while you have none of them yet).
+# Dashboard rollups. These reference the Stage and/or Status values above.
+# EARLY_STAGES: still In Progress here = no response yet (used for Response Rate).
+# INTERVIEW_STAGES: counted as "Interviews & Tests" when still In Progress.
+# BAD_OUTCOMES: what the drop-off funnel counts (Withdrawn stays out on purpose).
+EARLY_STAGES = ['Applied', 'Application Review']
+INTERVIEW_STAGES = ['Recruiter / HR Screen', 'Hiring Manager Screen', 'Technical Interview',
+                    'Take-Home Task', 'Panel / Team Interview', 'Final Interview']
 SUCCESS = ('Offer Received', 'Accepted')
+BAD_OUTCOMES = ('Rejected', 'Ghosted')
+
+# Drop-off analysis. The donut fills in from the very first bad outcome. The focus
+# hint below it appears once there are at least DROP_OFF_MIN bad outcomes in total
+# (across all stages), and then points at the most frequent stage. These are gentle
+# hypotheses to think about, not verdicts. Edit the text and the threshold freely.
+DROP_OFF_MIN = 5
+STAGE_HINTS = {
+    'Applied': "Most drop-offs happen right after applying. This is often about how closely the resume matches each posting, or how relevant the roles are. Reviewing targeting and keywords is a good first step.",
+    'Application Review': "Most drop-offs happen during application review. This often points to resume clarity and relevance; tailored, quantified bullets tend to get further.",
+    'Recruiter / HR Screen': "Most drop-offs happen at the recruiter screen. Tightening your intro pitch, aligning on salary early, and showing clear interest in the role can help.",
+    'Hiring Manager Screen': "Most drop-offs happen at the hiring-manager stage. Connecting your experience to the team's needs, and showing you researched the role, often makes the difference.",
+    'Technical Interview': "Most drop-offs happen at the technical stage. Reviewing core skills and practicing explaining your thinking out loud can help here.",
+    'Take-Home Task': "Most drop-offs happen at the take-home stage. Reading the brief closely, documenting your approach, and polishing the presentation matter as much as the result.",
+    'Panel / Team Interview': "Most drop-offs happen at the team round. Preparing varied examples and showing how you collaborate can strengthen this stage.",
+    'Final Interview': "Most drop-offs happen at the final round. By here it is usually less about skill and more about motivation and fit; prepare your 'why this team' story.",
+    'Offer / Negotiation': "Most drop-offs happen around the offer, which is often outside your control. Responding promptly and keeping expectations aligned helps, and reaching this stage at all is a strong signal.",
+}
+NOT_ENOUGH_DATA = "Not enough closed applications yet for a reliable read. Keep tracking and this will sharpen over time."
 
 # Theme colors
 COLOR_PRIMARY = '#1F4E78'
@@ -88,6 +116,7 @@ def build_tracker(filename):
                              'border': 1, 'align': 'center', 'valign': 'vcenter'})
     pct_fmt = wb.add_format({'bold': True, 'font_size': 14, 'font_color': COLOR_PRIMARY, 'num_format': '0.0%',
                              'border': 1, 'align': 'center', 'valign': 'vcenter'})
+    hint_fmt = wb.add_format({'text_wrap': True, 'valign': 'top', 'border': 1, 'font_color': COLOR_PRIMARY})
 
     # Body formats. All centered so typed data lines up; notes stay left for readability.
     body_center = wb.add_format({'align': 'center', 'valign': 'vcenter'})
@@ -101,6 +130,7 @@ def build_tracker(filename):
     lookups = [
         ('Platform', PLATFORMS),
         ('Work Model', WORK_MODELS),
+        ('Stage', STAGES),
         ('Status', STATUSES),
         ('Currency', CURRENCIES),
         ('Employment Type', EMP_TYPES),
@@ -119,6 +149,8 @@ def build_tracker(filename):
     # --- Application table ---------------------------------------------------
     # (header, body format, dropdown source or None, column width)
     # Order matters: the first columns are the ones you want visible without scrolling.
+    # Stage = where in the process; Status = the outcome. They live side by side so
+    # marking an outcome never erases the stage it was reached at.
     app_columns = [
         ('Company Name', body_center, None, 24),
         ('Job Title', body_center, None, 24),
@@ -126,7 +158,8 @@ def build_tracker(filename):
         ('Location / Work Model', body_center, 'Work Model', 18),
         ('Date Applied', body_date, None, 13),
         ('Days Elapsed', body_center, None, 13),
-        ('Status', body_center, 'Status', 20),
+        ('Stage', body_center, 'Stage', 22),
+        ('Status', body_center, 'Status', 16),
         ('Next Action', body_center, 'Next Action', 18),
         ('Next Action Date', body_date, None, 16),
         ('Job Posting URL', body_url, None, 26),
@@ -141,10 +174,15 @@ def build_tracker(filename):
     ]
     headers = [c[0] for c in app_columns]
     date_col = xl_col_to_name(headers.index('Date Applied'))
+    stage_col = xl_col_to_name(headers.index('Stage'))
     status_col = xl_col_to_name(headers.index('Status'))
     company_col = xl_col_to_name(headers.index('Company Name'))
     next_col = xl_col_to_name(headers.index('Next Action Date'))
     days_idx = headers.index('Days Elapsed')
+
+    # Whole-column references reused by the dashboard and the drop-off helper.
+    app_stage = f"'Job Applications'!{stage_col}:{stage_col}"
+    app_status = f"'Job Applications'!{status_col}:{status_col}"
 
     ws_app.set_row(0, 28)
     ws_app.add_table(0, 0, LAST_ROW - 1, len(app_columns) - 1, {
@@ -166,12 +204,16 @@ def build_tracker(filename):
         formula = f'=IF(ISBLANK({date_col}{row}),"",TODAY()-{date_col}{row})'
         ws_app.write_formula(row - 1, days_idx, formula, body_center)
 
-    # Color each status (colors come from STATUS_STYLES at the top of the file)
-    status_range = f'{status_col}2:{status_col}{LAST_ROW}'
-    for status, (bg, font) in STATUS_STYLES.items():
-        fmt = wb.add_format({'bg_color': bg, 'font_color': font, 'bold': True})
-        ws_app.conditional_format(status_range, {'type': 'cell', 'criteria': 'equal to',
-                                                 'value': f'"{status}"', 'format': fmt})
+    # Color the Stage (blue shades) and the Status (outcome colors) columns.
+    def color_column(col_letter, styles):
+        rng = f'{col_letter}2:{col_letter}{LAST_ROW}'
+        for name, (bg, font) in styles.items():
+            fmt = wb.add_format({'bg_color': bg, 'font_color': font, 'bold': True})
+            ws_app.conditional_format(rng, {'type': 'cell', 'criteria': 'equal to',
+                                            'value': f'"{name}"', 'format': fmt})
+
+    color_column(stage_col, STAGE_STYLES)
+    color_column(status_col, OUTCOME_STYLES)
 
     # Highlight the Next Action Date: red if it is already past, amber if it is today.
     # Blank cells stay untouched; the two rules never overlap (a date can't be both).
@@ -193,7 +235,8 @@ def build_tracker(filename):
         'Source / Platform': 'LinkedIn',
         'Location / Work Model': 'Hybrid',
         'Date Applied': date.today() - timedelta(days=5),
-        'Status': 'HR Screen',
+        'Stage': 'Recruiter / HR Screen',
+        'Status': 'In Progress',
         'Next Action': 'HR Call',
         'Next Action Date': date.today() + timedelta(days=3),
         'Resume Version': 'CV_ProductManager_Tech_v3.pdf',
@@ -213,16 +256,49 @@ def build_tracker(filename):
         else:
             ws_app.write(1, idx, example[header], fmt)
 
+    # --- Drop-off helper (backstage, on the Lookup Lists sheet) --------------
+    # Per stage: count bad outcomes, add a tiny rank key to break ties deterministically,
+    # and store the matching hint. The dashboard donut and focus text read from here.
+    h = len(lookups) + 1  # one blank column after the dropdown lists
+    c_stage, c_cnt, c_key, c_hint = (xl_col_to_name(h + i) for i in range(4))
+    c_top, c_topcnt, c_focus = xl_col_to_name(h + 5), xl_col_to_name(h + 6), xl_col_to_name(h + 8)
+    last = 1 + len(STAGES)
+    rng_stage = f'${c_stage}$2:${c_stage}${last}'
+    rng_cnt = f'${c_cnt}$2:${c_cnt}${last}'
+    rng_key = f'${c_key}$2:${c_key}${last}'
+    rng_hint = f'${c_hint}$2:${c_hint}${last}'
+
+    ws_lookups.write(f'{c_stage}1', 'Stage', sub_hdr_fmt)
+    ws_lookups.write(f'{c_cnt}1', 'Drop-offs', sub_hdr_fmt)
+    ws_lookups.write(f'{c_key}1', 'Rank', sub_hdr_fmt)
+    ws_lookups.write(f'{c_hint}1', 'Hint', sub_hdr_fmt)
+    for i, stage in enumerate(STAGES):
+        r = 2 + i
+        ws_lookups.write(f'{c_stage}{r}', stage)
+        bad = '+'.join(f'COUNTIFS({app_status},"{o}",{app_stage},"{stage}")' for o in BAD_OUTCOMES)
+        ws_lookups.write_formula(f'{c_cnt}{r}', f'={bad}')
+        ws_lookups.write_formula(f'{c_key}{r}', f'={c_cnt}{r}+({len(STAGES) + 1}-ROW())/1000')
+        ws_lookups.write(f'{c_hint}{r}', STAGE_HINTS[stage])
+
+    # Top 3 drop-off stages (labels + real counts) for the donut.
+    ws_lookups.write(f'{c_top}1', 'Top stage', sub_hdr_fmt)
+    ws_lookups.write(f'{c_topcnt}1', 'Drop-offs', sub_hdr_fmt)
+    for k in range(1, 4):
+        r = 1 + k
+        ws_lookups.write_formula(f'{c_top}{r}', f'=INDEX({rng_stage},MATCH(LARGE({rng_key},{k}),{rng_key},0))')
+        ws_lookups.write_formula(f'{c_topcnt}{r}', f'=INDEX({rng_cnt},MATCH(LARGE({rng_key},{k}),{rng_key},0))')
+
+    # Focus hint: the hypothesis for the top stage, or NOT_ENOUGH_DATA below the threshold.
+    ws_lookups.write(f'{c_focus}1', 'Focus hint', sub_hdr_fmt)
+    ws_lookups.write_formula(
+        f'{c_focus}2',
+        f'=IF(SUM({rng_cnt})<{DROP_OFF_MIN},"{NOT_ENOUGH_DATA}",INDEX({rng_hint},MATCH(MAX({rng_key}),{rng_key},0)))')
+
     # --- Dashboard -----------------------------------------------------------
-    # Whole-column references so the KPIs cover the table at any size. The column
-    # letters come from the table layout above, so reordering columns can't break this.
-    status_column = f"'Job Applications'!{status_col}:{status_col}"
-    # Total = filled Company Name cells; the -1 drops the header row, which a
-    # whole-column COUNTA would otherwise count as one.
     total = f"COUNTA('Job Applications'!{company_col}:{company_col})-1"
 
-    def count_of(names):
-        return '+'.join(f'COUNTIF({status_column},"{name}")' for name in names)
+    def in_progress_at(stages):
+        return '+'.join(f'COUNTIFS({app_status},"In Progress",{app_stage},"{s}")' for s in stages)
 
     ws_dash.set_column(0, 4, 22)
     ws_dash.write('A1', 'Job Search Analytics', sub_hdr_fmt)
@@ -230,53 +306,53 @@ def build_tracker(filename):
     # KPI cards: each label sits on one row with its value on the row directly below.
     kpis = [
         ('Total Applications', f'={total}', kpi_fmt),
-        ('In Progress', f'={count_of(IN_PROGRESS)}', kpi_fmt),
-        ('Interviews & Tests', f'={count_of(INTERVIEWS)}', kpi_fmt),
-        ('Offers Received', f'={count_of(["Offer Received", "Accepted"])}', kpi_fmt),
-        ('Response Rate', f'=IF({total}<=0,0,(({total})-({count_of(NO_RESPONSE)}))/({total}))', pct_fmt),
+        ('In Progress', f'=COUNTIF({app_status},"In Progress")', kpi_fmt),
+        ('Interviews & Tests', f'={in_progress_at(INTERVIEW_STAGES)}', kpi_fmt),
+        ('Offers Received', f'=COUNTIF({app_status},"Offer Received")+COUNTIF({app_status},"Accepted")', kpi_fmt),
+        ('Response Rate',
+         f'=IF({total}<=0,0,(({total})-(({in_progress_at(EARLY_STAGES)})+COUNTIF({app_status},"Ghosted")))/({total}))',
+         pct_fmt),
     ]
     for col, (label, formula, fmt) in enumerate(kpis):
         ws_dash.write(2, col, label, sub_hdr_fmt)
         ws_dash.write_formula(3, col, formula, fmt)
 
-    # Status breakdown table. The header sits on this row; counts start right below it.
-    # Success rows are tinted only when their count is above zero (conditional format).
+    # Pipeline & Outcomes breakdown. In Progress rows are counted by Stage; finished
+    # rows by Status. Each row is tinted with its own color only when its count > 0.
+    breakdown = [(s, f'=COUNTIFS({app_status},"In Progress",{app_stage},"{s}")', STAGE_STYLES[s]) for s in STAGES]
+    breakdown += [(o, f'=COUNTIF({app_status},"{o}")', OUTCOME_STYLES[o]) for o in STATUSES if o != 'In Progress']
+
     breakdown_header_row = 6
     first_data_row = breakdown_header_row + 1
-    ws_dash.write(f'A{breakdown_header_row}', 'Status', sub_hdr_fmt)
+    ws_dash.write(f'A{breakdown_header_row}', 'Pipeline & Outcomes', sub_hdr_fmt)
     ws_dash.write(f'B{breakdown_header_row}', 'Count', sub_hdr_fmt)
-    for i, status in enumerate(STATUSES):
+    for i, (label, formula, (bg, font)) in enumerate(breakdown):
         row = first_data_row + i
-        ws_dash.write(f'A{row}', status, label_fmt)
-        ws_dash.write_formula(f'B{row}', f'=COUNTIF({status_column}, A{row})', count_fmt)
-        if status in SUCCESS:
-            bg, font = STATUS_STYLES[status]
-            win_fmt = wb.add_format({'bg_color': bg, 'font_color': font, 'bold': True})
-            ws_dash.conditional_format(f'A{row}:B{row}', {'type': 'formula',
-                                                          'criteria': f'=$B${row}>0', 'format': win_fmt})
+        ws_dash.write(f'A{row}', label, label_fmt)
+        ws_dash.write_formula(f'B{row}', formula, count_fmt)
+        tint = wb.add_format({'bg_color': bg, 'font_color': font, 'bold': True})
+        ws_dash.conditional_format(f'A{row}:B{row}', {'type': 'formula', 'criteria': f'=$B${row}>0', 'format': tint})
+    last_data_row = first_data_row + len(breakdown) - 1
 
-    last_data_row = first_data_row + len(STATUSES) - 1
-
-    # Chart. Success columns get their status color; every other column stays the theme
-    # color. A zero-count column has no height, so a success color only shows once count > 0.
-    points = [{'fill': {'color': STATUS_STYLES[s][0]}} if s in SUCCESS else {} for s in STATUSES]
+    # Wide bar chart so the 14 category labels stay readable. Each bar keeps its
+    # stage/outcome color via per-point fills.
+    points = [{'fill': {'color': bg}} for (_, _, (bg, font)) in breakdown]
     chart = wb.add_chart({'type': 'column'})
     chart.add_series({
         'categories': f"='Dashboard'!$A${first_data_row}:$A${last_data_row}",
         'values': f"='Dashboard'!$B${first_data_row}:$B${last_data_row}",
-        'fill': {'color': COLOR_PRIMARY},
         'points': points,
         'data_labels': {'value': True},
     })
-    chart.set_title({'name': 'Applications by Status'})
+    chart.set_title({'name': 'Pipeline & Outcomes'})
     chart.set_legend({'none': True})
-    chart.set_size({'width': 560, 'height': 320})
+    chart.set_x_axis({'num_font': {'rotation': -45}})
+    chart.set_size({'width': 960, 'height': 340})
     ws_dash.insert_chart('D6', chart)
 
     # Next Actions summary: follow-ups that are overdue, due today, or coming up this week.
-    # Counts read the Next Action Date column; each row is tinted only when its count > 0.
     na_range = f"'Job Applications'!{next_col}:{next_col}"
-    na_header_row = 19
+    na_header_row = last_data_row + 2
     ws_dash.write(f'A{na_header_row}', 'Next Actions', sub_hdr_fmt)
     ws_dash.write(f'B{na_header_row}', 'Count', sub_hdr_fmt)
     na_buckets = [
@@ -284,13 +360,29 @@ def build_tracker(filename):
         ('Due today', f'=COUNTIF({na_range},TODAY())', DATE_TODAY),
         ('Next 7 days', f'=COUNTIFS({na_range},">"&TODAY(),{na_range},"<="&(TODAY()+7))', DATE_UPCOMING),
     ]
-    for i, (label, formula, colors) in enumerate(na_buckets):
+    for i, (label, formula, (bg, font)) in enumerate(na_buckets):
         r = na_header_row + 1 + i
         ws_dash.write(f'A{r}', label, label_fmt)
         ws_dash.write_formula(f'B{r}', formula, count_fmt)
-        bg, font = colors
         cf_fmt = wb.add_format({'bg_color': bg, 'font_color': font, 'bold': True})
         ws_dash.conditional_format(f'A{r}:B{r}', {'type': 'formula', 'criteria': f'=$B${r}>0', 'format': cf_fmt})
+
+    # Drop-off donut: top 3 stages where applications are rejected or ghosted.
+    donut = wb.add_chart({'type': 'doughnut'})
+    donut.add_series({
+        'name': 'Drop-offs by stage',
+        'categories': f"='Lookup Lists'!${c_top}$2:${c_top}$4",
+        'values': f"='Lookup Lists'!${c_topcnt}$2:${c_topcnt}$4",
+        'data_labels': {'value': True},
+    })
+    donut.set_title({'name': 'Top Drop-off Stages'})
+    donut.set_size({'width': 440, 'height': 300})
+    ws_dash.insert_chart('D25', donut)
+
+    # Focus text: a gentle hypothesis for the top drop-off stage (or a "keep tracking" note).
+    ws_dash.write('J26', 'Where to focus', sub_hdr_fmt)
+    ws_dash.merge_range('J27:Q34', '', hint_fmt)
+    ws_dash.write_formula('J27', f"='Lookup Lists'!${c_focus}$2", hint_fmt)
 
     wb.close()
 
